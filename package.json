@@ -1,0 +1,73 @@
+{
+  "name": "never-forget-server",
+  "version": "1.0.0",
+  "description": "The backend server for Never Forget, a spaced repetition learning app.",
+  "author": "tmns <tmn5@pm.me>",
+  "license": "WTFPL",
+  "main": "index.js",
+  "scripts": {
+    "build": "babel src --out-dir dist",
+    "test": "cross-env NODE_ENV=testing jest --forceExit --detectOpenHandles --silent",
+    "dev": "nodemon --exec yarn restart",
+    "restart": "rimraf dist && yarn build && yarn start",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tmns/never-forget-server.git"
+  },
+  "keywords": [
+    "spaced",
+    "repetition",
+    "learn",
+    "super",
+    "memo",
+    "sm",
+    "never",
+    "forget",
+    "server",
+    "backend"
+  ],
+  "bugs": {
+    "url": "https://github.com/tmns/never-forget-server/issues"
+  },
+  "homepage": "https://github.com/tmns/never-forget-server#readme",
+  "devDependencies": {
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.5",
+    "@babel/plugin-proposal-class-properties": "^7.4.4",
+    "@babel/plugin-proposal-object-rest-spread": "^7.4.4",
+    "@babel/preset-env": "^7.4.5",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^10.0.1",
+    "babel-jest": "^24.8.0",
+    "cross-env": "^5.2.0",
+    "graphql-codegen-core": "^0.18.2",
+    "jest": "^24.8.0",
+    "nodemon": "^1.19.1",
+    "rimraf": "^2.6.3",
+    "supertest": "^4.0.2"
+  },
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/",
+    "testEnvironment": "node",
+    "setupTestFrameworkScriptFile": "<rootDir>/test-db-setup.js",
+    "testPathIgnorePatterns": [
+      "dist/"
+    ],
+    "restoreMocks": true
+  },
+  "dependencies": {
+    "bcrypt": "^3.0.6",
+    "connect-mongodb-session": "^2.1.1",
+    "cuid": "^2.1.6",
+    "express-session": "^1.16.1",
+    "graphql-import": "^0.7.1",
+    "graphql-yoga": "^1.17.4",
+    "lodash": "^4.17.11",
+    "mongoose": "^5.5.11",
+    "ms": "^2.1.1",
+    "validator": "^11.0.0"
+  }
+}

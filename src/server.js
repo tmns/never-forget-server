@@ -1,0 +1,84 @@
+import { GraphQLServer } from 'graphql-yoga';
+import session from "express-session";
+import { merge } from "lodash";
+import ms from "ms";
+
+import { loadTypeSchema } from "./utils/schema";
+import config from "./config/config";
+import { connect } from "./db";
+import user from "./types/user/user.resolvers";
+
+var MongoDBStore = require("connect-mongodb-session")(session);
+
+var types = ["user"];
+
+async function start() {
+  const rootSchema = `
+    schema {
+      query: Query
+      mutation: Mutation
+    }
+  `;
+
+  var schemaTypes = await Promise.all(types.map(loadTypeSchema));
+
+  var server = new GraphQLServer({
+    typeDefs: [rootSchema, ...schemaTypes],
+    resolvers: merge({}, user),
+    context(req) {
+      return { req: req.request };
+    }
+  });
+
+  var store = new MongoDBStore(
+    {
+      uri: config.dbUrl,
+      collection: "sessions"
+    }
+  );
+
+  store.on('error', function(error) {
+    console.log(error);
+  });
+
+  server.express.use(
+    session({
+      name: "sessionId",
+      secret: `test-secret`,
+      resave: true,
+      saveUninitialized: true,
+      cookie: {
+        secure: process.env.NODE_ENV == "production",
+        maxAge: ms("1d")
+      },
+      store: store
+    })
+  );
+
+  const serverUrl = `${config.proto}://${config.host}:${config.port}`;
+
+  var opts = {
+    port: config.port,
+    cors: {
+      credentials: true,
+      origin: [serverUrl]
+    }
+  };
+
+  try {
+    await connect(config.dbUrl);
+  } catch (err) {
+    console.log(`Error connecting to db: ${err}`);
+  }
+
+  try {
+    await server.start(opts);
+    console.log(
+      `GQL server ready at ${serverUrl}`
+    );
+  } catch (err) {
+    console.log(`Error bringing up the server: ${err}`);
+  }
+}
+
+export default start;

@@ -107,11 +107,11 @@ async function signup(_, args) {
   });
 }
 
-async function login(_, args, { req }) {
+async function login(_, args, ctx) {
   var user = await User.findOne({ username: args.input.username });
   if (user != null) {
     if (await bcrypt.compare(args.input.password, user.password)) {
-      req.session.user = {
+      ctx.session.user = {
         _id: user._id,
         username: user.username
       };
@@ -120,6 +120,15 @@ async function login(_, args, { req }) {
     throw new Error("Incorrect password.");
   }
   throw new Error("No such user exists.");
+}
+
+async function logout(_, args, ctx) {
+  if (!ctx.session.user || !ctx.sessionID) {
+    throw new Error("User not authenticated.");
+  }
+  var loggedOutUser = ctx.session.user;
+  await ctx.session.destroy();
+  return loggedOutUser;
 }
 
 // *********** general helper functions ***********
@@ -141,6 +150,7 @@ export default {
     updateUsername,
     updatePassword,
     signup,
-    login
+    login,
+    logout
   }
 };

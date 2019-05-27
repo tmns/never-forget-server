@@ -19,6 +19,10 @@ input loginUserInput {
   password: String!
 }
 
+input logoutUserInput {
+  username: String!
+}
+
 input UpdateUsernameInput {
   username: String!
   password: String!
@@ -33,6 +37,7 @@ input UpdatePasswordInput {
 type Mutation {
   signup(input: NewUserInput!): User!
   login(input: loginUserInput!): User!
+  logout: User!
   updateUsername(input: UpdateUsernameInput!): User!
   updatePassword(input: UpdatePasswordInput!): User!
 }

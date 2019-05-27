@@ -1,6 +1,5 @@
 import { GraphQLServer } from 'graphql-yoga';
 import session from "express-session";
-import { MongoClient } from 'mongodb';
 import { merge } from "lodash";
 import ms from "ms";
 

@@ -1,69 +1,47 @@
 "use strict";
 
-import { User } from "./user.model";
-import bcrypt from "bcrypt";
+import { utils } from "./utils";
 
 function me(_, args, ctx) {
-  if (!ctx.session.user || !ctx.sessionID) {
+  if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
   return ctx.session.user;
 }
 
 function isLogin(_, args, ctx) {
-  if (!ctx.session.user || !ctx.sessionID) {
+  if (!utils.isAuthenticated(ctx)) {
     return false;
   }
   return true;
 }
 
 async function updateUsername(_, args, ctx) {
-  if (!ctx.session.user || !ctx.sessionID) {
+  if (args.input.username == '') {
+    throw new Error("Username must be provided");
+  }
+
+  if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
 
-  if (args.input.password == "") {
-    throw new Error("Password not provided. User not authorized.");
-  }
-
-  var isAuthz = await checkPassword(ctx.session.user._id, args.input.password);
-
-  if (!isAuthz) {
+  if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
     throw new Error("Password not valid. User not authorized.");
   }
 
-  var user = await User.findByIdAndUpdate(
-    ctx.session.user._id,
-    { username: args.input.username },
-    {
-      useFindAndModify: false,
-      new: true
-    }
-  )
-    .lean()
-    .exec();
-
-  ctx.session.user.username = user.username;
-
-  return { _id: user._id, username: user.username };
+  return await utils.findAndUpdateUsername(ctx.session, args.input.username);
 }
 
 async function updatePassword(_, args, ctx) {
-  if (!ctx.session.user || !ctx.sessionID) {
-    throw new Error("User not authenticated.");
-  }
-
-  if (args.input.password == "") {
-    throw new Error("Password not provided. User not authorized.");
-  }
-
   if (args.input.newPassword == "") {
     throw new Error("New password not provided.");
   }
 
-  var isAuthz = await checkPassword(ctx.session.user._id, args.input.password);
-  console.log(isAuthz);
-  if (!isAuthz) {
+  if (!utils.isAuthenticated(ctx)) {
+    throw new Error("User not authenticated.");
+  }
+
+  if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
     throw new Error("Password not valid. User not authorized.");
   }
 
@@ -71,74 +49,50 @@ async function updatePassword(_, args, ctx) {
     throw new Error("Passwords do not match");
   }
 
-  var passwordHash = await bcrypt.hash(args.input.newPassword, 12);
-
-  var user = await User.findByIdAndUpdate(
-    ctx.session.user._id,
-    { password: passwordHash },
-    {
-      useFindAndModify: false,
-      new: true
-    }
-  )
-    .lean()
-    .exec();
-
-  return { _id: user._id, username: user.username };
+  return await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
 }
 
 async function signup(_, args) {
+  if (args.input.username == '' || args.input.password == '') {
+    throw new Error('Username or password not valid');
+  }
+
   if (args.input.password != args.input.confirmPassword) {
     throw new Error("Passwords do not match.");
   }
 
-  var users = await User.find({});
-  var userNames = users.map(userObject => userObject.username);
-
-  if (userNames.includes(args.input.username)) {
-    throw new Error("Another user with this username already exists.");
-  }
-
-  var passwordHash = bcrypt.hash(args.input.password, 12);
-
-  return await User.create({
-    username: args.input.username,
-    password: passwordHash
-  });
+  return await utils.createUser(args.input.username, args.input.password);
 }
 
 async function login(_, args, ctx) {
-  var user = await User.findOne({ username: args.input.username });
-  if (user != null) {
-    if (await bcrypt.compare(args.input.password, user.password)) {
-      ctx.session.user = {
-        _id: user._id,
-        username: user.username
-      };
-      return req.session.user;
-    }
-    throw new Error("Incorrect password.");
+  if (args.input.username == '' || args.input.password == '') {
+    throw new Error('Username or password not valid');
   }
-  throw new Error("No such user exists.");
+
+  return await utils.loginUser(
+    args.input.username,
+    args.input.password,
+    ctx.session
+  );
 }
 
 async function logout(_, args, ctx) {
-  if (!ctx.session.user || !ctx.sessionID) {
+  if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
-  var loggedOutUser = ctx.session.user;
-  await ctx.session.destroy();
-  return loggedOutUser;
+  return await utils.logoutUser(ctx.session);
 }
 
-// *********** general helper functions ***********
+async function deleteAccount(_, args, ctx) {
+  if (!utils.isAuthenticated(ctx)) {
+    throw new Error('User not authenticated.');
+  }
 
-async function checkPassword(userId, password) {
-  var user = await User.findById(userId);
-  console.log(user);
-  var passwordHash = user.password;
-  var result = await bcrypt.compare(password, passwordHash);
-  return result;
+  if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
+    throw new Error("Password not valid. User not authorized.");
+  }
+
+  return await utils.removeUser(ctx.session);
 }
 
 export default {
@@ -151,6 +105,7 @@ export default {
     updatePassword,
     signup,
     login,
-    logout
+    logout,
+    deleteAccount
   }
 };

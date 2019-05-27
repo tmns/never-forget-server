@@ -1,3 +1,5 @@
+'use strict';
+
 import { GraphQLServer } from 'graphql-yoga';
 import session from "express-session";
 import { merge } from "lodash";

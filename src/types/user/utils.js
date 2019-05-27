@@ -4,25 +4,27 @@ import { User } from "./user.model";
 import bcrypt from "bcrypt";
 
 async function createUser(username, password) {
+  if (!isValidUsername(username) || !isValidPassword(password)) {
+    throw new Error('Invalid username or password');
+  }
+
   var users = await User.find({});
   var userNames = users.map(userObject => userObject.username);
   
   if (userNames.includes(username)) {
     throw new Error("Another user with this username already exists.");
   }
-  
-  var passwordHash = await bcrypt.hash(password, 12);
-  
+    
   return await User.create({
     username,
-    password: passwordHash
+    password
   });
 }
 
 async function loginUser(username, password, session) {
   var user = await User.findOne({ username });
   if (user != null) {
-    if (await bcrypt.compare(password, user.password)) {
+    if (await user.checkPassword(password)) {
       session.user = {
         _id: user._id,
         username: user.username
@@ -41,6 +43,10 @@ async function logoutUser(session) {
 }
 
 async function findAndUpdatePassword(session, password) {
+  if (!isValidPassword(password)) {
+    throw new Error('Invalid password. Must be between eight and thirty two characters.');
+  }
+
   var passwordHash = await bcrypt.hash(password, 12);
 
   var user = await User.findByIdAndUpdate(
@@ -58,6 +64,9 @@ async function findAndUpdatePassword(session, password) {
 }
 
 async function findAndUpdateUsername(session, username) {
+  if (!isValidUsername(username)) {
+    throw new Error('Invalid username. Must be between two and sixteen characters.');
+  }
   var user = await User.findByIdAndUpdate(
     session.user._id,
     { username },
@@ -92,16 +101,18 @@ async function isAuthorized(userId, password) {
     return false;
   }
 
-  return await checkPassword(userId, password);
+  var user = await User.findById(userId);
+  return await user.checkPassword(password);
 }
 
-// ***************** helper functions *****************
+function isValidPassword(password) {
+  var length = password.length;
+  return length >= 8 && length <= 64;
+}
 
-async function checkPassword(userId, password) {
-  var user = await User.findById(userId);
-  var passwordHash = user.password;
-  var result = await bcrypt.compare(password, passwordHash);
-  return result;
+function isValidUsername(username) {
+  var length = username.length;
+  return length >= 2 && length <= 16;
 }
 
 export const utils = {

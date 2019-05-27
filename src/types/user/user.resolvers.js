@@ -2,7 +2,7 @@
 
 import { utils } from "./utils";
 
-function me(_, args, ctx) {
+function whoami(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
@@ -17,44 +17,40 @@ function isLogin(_, args, ctx) {
 }
 
 async function updateUsername(_, args, ctx) {
-  if (args.input.username == '') {
-    throw new Error("Username must be provided");
-  }
-
   if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Password not valid. User not authorized.");
+    throw new Error("Invalid password.");
   }
 
   return await utils.findAndUpdateUsername(ctx.session, args.input.username);
 }
 
 async function updatePassword(_, args, ctx) {
-  if (args.input.newPassword == "") {
-    throw new Error("New password not provided.");
-  }
-
   if (!utils.isAuthenticated(ctx)) {
     throw new Error("User not authenticated.");
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Password not valid. User not authorized.");
+    throw new Error("Invalid password.");
   }
 
-  if (args.input.newPassword !== args.input.confirmPassword) {
+  if (args.input.password == args.input.newPassword) {
+    throw new Error('New password must be different than current password.');
+  }
+
+  if (args.input.newPassword != args.input.confirmPassword) {
     throw new Error("Passwords do not match");
   }
 
   return await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
 }
 
-async function signup(_, args) {
-  if (args.input.username == '' || args.input.password == '') {
-    throw new Error('Username or password not valid');
+async function signup(_, args, ctx) {
+  if (utils.isAuthenticated(ctx)) {
+    throw new Error("You are already registered and logged in.");
   }
 
   if (args.input.password != args.input.confirmPassword) {
@@ -65,8 +61,8 @@ async function signup(_, args) {
 }
 
 async function login(_, args, ctx) {
-  if (args.input.username == '' || args.input.password == '') {
-    throw new Error('Username or password not valid');
+  if (args.input.username == "" || args.input.password == "") {
+    throw new Error("Username or password not valid");
   }
 
   return await utils.loginUser(
@@ -85,11 +81,11 @@ async function logout(_, args, ctx) {
 
 async function deleteAccount(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error('User not authenticated.');
+    throw new Error("User not authenticated.");
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Password not valid. User not authorized.");
+    throw new Error("Invalid password.");
   }
 
   return await utils.removeUser(ctx.session);
@@ -97,7 +93,7 @@ async function deleteAccount(_, args, ctx) {
 
 export default {
   Query: {
-    me,
+    whoami,
     isLogin
   },
   Mutation: {

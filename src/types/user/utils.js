@@ -2,17 +2,18 @@
 
 import { User } from "./user.model";
 import bcrypt from "bcrypt";
+import { UserInputError } from "apollo-server-core";
 
 async function createUser(username, password) {
   if (!isValidUsername(username) || !isValidPassword(password)) {
-    throw new Error('Invalid username or password');
+    throw new UserInputError('Invalid username or password');
   }
 
   var users = await User.find({});
   var userNames = users.map(userObject => userObject.username);
   
   if (userNames.includes(username)) {
-    throw new Error("Another user with this username already exists.");
+    throw new UserInputError("Another user with this username already exists.");
   }
     
   return await User.create({
@@ -22,18 +23,17 @@ async function createUser(username, password) {
 }
 
 async function loginUser(username, password, session) {
-  var user = await User.findOne({ username });
-  if (user != null) {
-    if (await user.checkPassword(password)) {
+  if (isValidUsername && isValidPassword) {
+    var user = await User.findOne({ username });
+    if (user != null && await user.checkPassword(password)) {
       session.user = {
         _id: user._id,
         username: user.username
       };
       return session.user;
     }
-    throw new Error("Incorrect password.");
   }
-  throw new Error("No such user exists.");
+  throw new UserInputError('Invalid username or password.')
 }
 
 async function logoutUser(session) {
@@ -44,7 +44,7 @@ async function logoutUser(session) {
 
 async function findAndUpdatePassword(session, password) {
   if (!isValidPassword(password)) {
-    throw new Error('Invalid password. Must be between eight and thirty two characters.');
+    throw new UserInputError('Invalid password. Must be between eight and thirty two characters.');
   }
 
   var passwordHash = await bcrypt.hash(password, 12);
@@ -65,7 +65,7 @@ async function findAndUpdatePassword(session, password) {
 
 async function findAndUpdateUsername(session, username) {
   if (!isValidUsername(username)) {
-    throw new Error('Invalid username. Must be between two and sixteen characters.');
+    throw new UserInputError('Invalid username. Must be between two and sixteen characters.');
   }
   var user = await User.findByIdAndUpdate(
     session.user._id,

@@ -1,28 +1,26 @@
 "use strict";
 
 import { utils } from "./utils";
+import { AuthenticationError, ForbiddenError } from "apollo-server-core";
 
 function whoami(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error("User not authenticated.");
+    throw new AuthenticationError('You must be logged in to do that!');
   }
   return ctx.session.user;
 }
 
 function isLogin(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
-    return false;
-  }
-  return true;
+  return utils.isAuthenticated(ctx);
 }
 
 async function updateUsername(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error("User not authenticated.");
+    throw new AuthenticationError('You must be logged in to do that!');
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Invalid password.");
+    throw new ForbiddenError("Invalid password.");
   }
 
   return await utils.findAndUpdateUsername(ctx.session, args.input.username);
@@ -30,19 +28,19 @@ async function updateUsername(_, args, ctx) {
 
 async function updatePassword(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error("User not authenticated.");
+    throw new AuthenticationError('You must be logged in to do that!');
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Invalid password.");
+    throw new ForbiddenError("Invalid password.");
   }
 
   if (args.input.password == args.input.newPassword) {
-    throw new Error('New password must be different than current password.');
+    throw new UserInputError('New password must be different than current password.');
   }
 
   if (args.input.newPassword != args.input.confirmPassword) {
-    throw new Error("Passwords do not match");
+    throw new UserInputError("Passwords do not match");
   }
 
   return await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
@@ -50,21 +48,17 @@ async function updatePassword(_, args, ctx) {
 
 async function signup(_, args, ctx) {
   if (utils.isAuthenticated(ctx)) {
-    throw new Error("You are already registered and logged in.");
+    throw new ForbiddenError("You are already registered and logged in.");
   }
 
   if (args.input.password != args.input.confirmPassword) {
-    throw new Error("Passwords do not match.");
+    throw new UserInputError("Passwords do not match.");
   }
 
   return await utils.createUser(args.input.username, args.input.password);
 }
 
 async function login(_, args, ctx) {
-  if (args.input.username == "" || args.input.password == "") {
-    throw new Error("Username or password not valid");
-  }
-
   return await utils.loginUser(
     args.input.username,
     args.input.password,
@@ -74,18 +68,18 @@ async function login(_, args, ctx) {
 
 async function logout(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error("User not authenticated.");
+    throw new AuthenticationError('You must be logged in to do that!');
   }
   return await utils.logoutUser(ctx.session);
 }
 
 async function deleteAccount(_, args, ctx) {
   if (!utils.isAuthenticated(ctx)) {
-    throw new Error("User not authenticated.");
+    throw new AuthenticationError('You must be logged in to do that!');
   }
 
   if (!(await utils.isAuthorized(ctx.session.user._id, args.input.password))) {
-    throw new Error("Invalid password.");
+    throw new ForbiddenError("Invalid password.");
   }
 
   return await utils.removeUser(ctx.session);

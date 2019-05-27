@@ -11,15 +11,28 @@ type Query {
 input NewUserInput {
   username: String!
   password: String!
+  confirmPassword: String!
 }
 
-input UpdateUserInput {
+input loginUserInput {
   username: String!
   password: String!
 }
 
+input UpdateUsernameInput {
+  username: String!
+  password: String!
+}
+
+input UpdatePasswordInput {
+  password: String!
+  newPassword: String!
+  confirmPassword: String!
+}
+
 type Mutation {
   signup(input: NewUserInput!): User!
-  login(input: NewUserInput!): User!
-  updateMe(input: UpdateUserInput!): User!
+  login(input: loginUserInput!): User!
+  updateUsername(input: UpdateUsernameInput!): User!
+  updatePassword(input: UpdatePasswordInput!): User!
 }

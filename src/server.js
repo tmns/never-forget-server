@@ -1,6 +1,7 @@
 'use strict';
 
-import { GraphQLServer } from 'graphql-yoga';
+import express from 'express';
+import { ApolloServer } from 'apollo-server-express';
 import session from "express-session";
 import { merge } from "lodash";
 import ms from "ms";
@@ -24,13 +25,15 @@ async function start() {
 
   var schemaTypes = await Promise.all(types.map(loadTypeSchema));
 
-  var server = new GraphQLServer({
+  var server = new ApolloServer({
     typeDefs: [rootSchema, ...schemaTypes],
     resolvers: merge({}, user),
     context(req) {
-      return { ...req.request }
+      return { ...req.req }
     }
   });
+
+  var app = express();
 
   var store = new MongoDBStore(
     {
@@ -43,7 +46,7 @@ async function start() {
     console.log(error);
   });
 
-  server.express.use(
+  app.use(
     session({
       name: "sessionId",
       secret: `test-secret`,
@@ -56,6 +59,8 @@ async function start() {
       store: store
     })
   );
+
+  server.applyMiddleware({ app });
 
   const serverUrl = `${config.proto}://${config.host}:${config.port}`;
 
@@ -74,9 +79,9 @@ async function start() {
   }
 
   try {
-    await server.start(opts);
+    await app.listen(opts);
     console.log(
-      `GQL server ready at ${serverUrl}`
+      `GQL server ready at ${serverUrl}/${server.graphqlPath}`
     );
   } catch (err) {
     console.log(`Error bringing up the server: ${err}`);

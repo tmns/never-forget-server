@@ -1,12 +1,10 @@
 import mongoose from "mongoose";
 import cuid from "cuid";
-import config from "./src/config";
+import config from "./src/config/config";
 import _ from "lodash";
 import { User } from "./src/types/user/user.model";
-import { Product } from "./src/types/product/product.model";
-import { Coupon } from "./src/types/coupon/coupon.model";
 
-const models = { Coupon, Product, User };
+const models = { User };
 global.newId = () => {
   return mongoose.Types.ObjectId();
 };

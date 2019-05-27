@@ -16,6 +16,25 @@ describe('User schema', () => {
     const typeSchemas = await Promise.all(
       ['user'].map(loadTypeSchema)
     )
+    typeDefs = root + typeSchemas.join(' ');
+    schema = schemaToTemplateContext(buildSchema(typeDefs));
+  })
+  test('User has base fields', () => {
+    let type = schema.types.find(t => {
+      return t.name == 'User';
+    })
+
+    expect(type).toBeTruthy();
+
+    let baseFields = {
+      username: 'String!',
+      password: 'String!'
+    }
+
+    type.fields.forEach(field => {
+      let type = baseFields[field.name]
+      expect(field.raw).toBe(type);
+    })
   })
   
 })

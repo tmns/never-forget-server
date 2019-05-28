@@ -23,7 +23,12 @@ async function updateUsername(_, args, ctx) {
     throw new ForbiddenError("Invalid password.");
   }
 
-  return await utils.findAndUpdateUsername(ctx.session, args.input.username);
+  try {
+    var updatedUser = await utils.findAndUpdateUsername(ctx.session, args.input.username);
+    return updatedUser;
+  } catch(err) {
+    throw err;
+  }
 }
 
 async function updatePassword(_, args, ctx) {
@@ -43,7 +48,12 @@ async function updatePassword(_, args, ctx) {
     throw new UserInputError("Passwords do not match");
   }
 
-  return await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
+  try {
+    var updatedUser =  await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
+    return updatedUser;
+  } catch(err) {
+    throw err;
+  }
 }
 
 async function signup(_, args, ctx) {
@@ -55,15 +65,25 @@ async function signup(_, args, ctx) {
     throw new UserInputError("Passwords do not match.");
   }
 
-  return await utils.createUser(args.input.username, args.input.password);
+  try {
+    var createdUser = await utils.createUser(args.input.username, args.input.password);
+    return createdUser;
+  } catch(err) {
+    throw err;
+  }
 }
 
 async function login(_, args, ctx) {
-  return await utils.loginUser(
-    args.input.username,
-    args.input.password,
-    ctx.session
-  );
+  try {
+    var loggedInUser =  await utils.loginUser(
+      args.input.username,
+      args.input.password,
+      ctx.session
+    );
+    return loggedInUser;
+  } catch (err) {
+    throw err;
+  }
 }
 
 async function logout(_, args, ctx) {

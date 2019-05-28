@@ -1,9 +1,9 @@
 import resolvers from "../user.resolvers";
 import mongoose from "mongoose";
-import { AuthenticationError, ForbiddenError } from "apollo-server-core";
+import { AuthenticationError, ForbiddenError, UserInputError } from "apollo-server-core";
 import { User } from "../user.model.js";
 
-describe("Resolvers", () => {
+describe("User Resolvers", () => {
   test("isLogin returns true if user object acttached to session", () => {
     var result = resolvers.Query.isLogin(null, null, {
       session: {
@@ -69,7 +69,7 @@ describe("Resolvers", () => {
   });
 
 
-  test("updateUsername throws AuthenticationError if user object not attached to session", () => {
+  test("updateUsername throws AuthenticationError if user object not attached to session", async () => {
     var args = {
       input: {
         username: "updated-name",
@@ -80,11 +80,10 @@ describe("Resolvers", () => {
       session: {}
     };
 
-    expect(() => resolvers.Mutation.updateUsername(null, args, ctx)).toThrow(
+    await expect(resolvers.Mutation.updateUsername(null, args, ctx)).rejects.toThrow(
       AuthenticationError
     );
   });
-
 
   test("updateUsername throws ForbiddenError if supplied password is incorrect", async () => {
     var user = await User.create({ username: "name", password: "test1234" });
@@ -98,13 +97,79 @@ describe("Resolvers", () => {
       session: {
         user: {
           _id: user._id,
-          usernmae: user.username
+          username: user.username
         }
       }
     };
 
-    expect(async () => await resolvers.Mutation.updateUsername(null, args, ctx)).toThrow(
+    await expect(resolvers.Mutation.updateUsername(null, args, ctx)).rejects.toThrow(
       ForbiddenError
+    );
+  });
+
+  test("updateUsername throws ForbiddenError if supplied password is empty string", async () => {
+    var user = await User.create({ username: "name", password: "test1234" });
+    var args = {
+      input: {
+        username: "updated-name",
+        password: ""
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: user._id,
+          username: user.username
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.updateUsername(null, args, ctx)).rejects.toThrow(
+      ForbiddenError
+    );
+  });
+
+  test("updateUsername throws UserInputError if new username is same as current username", async () => {
+    var user = await User.create({ username: "same-name", password: "test1234" });
+    var args = {
+      input: {
+        username: "same-name",
+        password: "test1234"
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: user._id,
+          username: user.username
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.updateUsername(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
+
+    test("updateUsername throws UserInputError if new username is not valid (ie not between 2 and 16 chars)", async () => {
+    var user = await User.create({ username: "name", password: "test1234" });
+    var args = {
+      input: {
+        username: "a",
+        password: "test1234"
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: user._id,
+          username: user.username
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.updateUsername(null, args, ctx)).rejects.toThrow(
+      UserInputError
     );
   });
 });

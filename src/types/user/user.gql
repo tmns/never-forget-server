@@ -4,8 +4,8 @@ type User {
 }
 
 type Query {
-  whoami: User!
   isLogin: Boolean!
+  whoami: User!
 }
 
 input NewUserInput {
@@ -14,7 +14,7 @@ input NewUserInput {
   confirmPassword: String!
 }
 
-input loginUserInput {
+input LoginUserInput {
   username: String!
   password: String!
 }
@@ -36,7 +36,7 @@ input DeleteAccountInput {
 
 type Mutation {
   signup(input: NewUserInput!): User!
-  login(input: loginUserInput!): User!
+  login(input: LoginUserInput!): User!
   logout: User!
   updateUsername(input: UpdateUsernameInput!): User!
   updatePassword(input: UpdatePasswordInput!): User!

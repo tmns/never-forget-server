@@ -23,7 +23,7 @@ async function start() {
     }
   `;
 
-  var schemaTypes = await Promise.all(types.map(loadTypeSchema));
+  var schemaTypes = await Promise.all(types.map(loadTypeSchema));  
 
   var server = new ApolloServer({
     typeDefs: [rootSchema, ...schemaTypes],

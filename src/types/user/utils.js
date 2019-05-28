@@ -6,16 +6,16 @@ import { UserInputError } from "apollo-server-core";
 
 async function createUser(username, password) {
   if (!isValidUsername(username) || !isValidPassword(password)) {
-    throw new UserInputError('Invalid username or password');
+    throw new UserInputError("Invalid username or password");
   }
 
   var users = await User.find({});
   var userNames = users.map(userObject => userObject.username);
-  
+
   if (userNames.includes(username)) {
     throw new UserInputError("Another user with this username already exists.");
   }
-    
+
   return await User.create({
     username,
     password
@@ -25,7 +25,7 @@ async function createUser(username, password) {
 async function loginUser(username, password, session) {
   if (isValidUsername && isValidPassword) {
     var user = await User.findOne({ username });
-    if (user != null && await user.checkPassword(password)) {
+    if (user != null && (await user.checkPassword(password))) {
       session.user = {
         _id: user._id,
         username: user.username
@@ -33,7 +33,7 @@ async function loginUser(username, password, session) {
       return session.user;
     }
   }
-  throw new UserInputError('Invalid username or password.')
+  throw new UserInputError("Invalid username or password.");
 }
 
 async function logoutUser(session) {
@@ -44,7 +44,9 @@ async function logoutUser(session) {
 
 async function findAndUpdatePassword(session, password) {
   if (!isValidPassword(password)) {
-    throw new UserInputError('Invalid password. Must be between eight and thirty two characters.');
+    throw new UserInputError(
+      "Invalid password. Must be between eight and thirty two characters."
+    );
   }
 
   var passwordHash = await bcrypt.hash(password, 12);
@@ -65,7 +67,14 @@ async function findAndUpdatePassword(session, password) {
 
 async function findAndUpdateUsername(session, username) {
   if (!isValidUsername(username)) {
-    throw new UserInputError('Invalid username. Must be between two and sixteen characters.');
+    throw new UserInputError(
+      "Invalid username. Must be between two and sixteen characters."
+    );
+  }
+  if (session.user.username == username) {
+    throw new UserInputError(
+      "Your new username must be different than your current username."
+    );
   }
   var user = await User.findByIdAndUpdate(
     session.user._id,
@@ -86,18 +95,16 @@ async function findAndUpdateUsername(session, username) {
 async function removeUser(session) {
   var removedUser = session.user;
   await session.destroy();
-  await User.findByIdAndDelete(
-    session.user._id
-  )
+  await User.findByIdAndDelete(session.user._id);
   return removedUser;
 }
 
-function isAuthenticated(ctx) {
-  return ctx.session.user && ctx.sessionID;
+function isAuthenticated(session) {
+  return session.user != undefined;
 }
 
 async function isAuthorized(userId, password) {
-  if (password == '') {
+  if (password == "") {
     return false;
   }
 
@@ -124,4 +131,4 @@ export const utils = {
   loginUser,
   logoutUser,
   removeUser
-}
+};

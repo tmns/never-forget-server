@@ -3,19 +3,19 @@
 import { utils } from "./utils";
 import { AuthenticationError, ForbiddenError } from "apollo-server-core";
 
+function isLogin(_, args, ctx) {
+  return utils.isAuthenticated(ctx.session);
+}
+
 function whoami(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
+  if (!utils.isAuthenticated(ctx.session)) {
     throw new AuthenticationError('You must be logged in to do that!');
   }
   return ctx.session.user;
 }
 
-function isLogin(_, args, ctx) {
-  return utils.isAuthenticated(ctx);
-}
-
 async function updateUsername(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
+  if (!utils.isAuthenticated(ctx.session)) {
     throw new AuthenticationError('You must be logged in to do that!');
   }
 
@@ -27,7 +27,7 @@ async function updateUsername(_, args, ctx) {
 }
 
 async function updatePassword(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
+  if (!utils.isAuthenticated(ctx.session)) {
     throw new AuthenticationError('You must be logged in to do that!');
   }
 
@@ -47,7 +47,7 @@ async function updatePassword(_, args, ctx) {
 }
 
 async function signup(_, args, ctx) {
-  if (utils.isAuthenticated(ctx)) {
+  if (utils.isAuthenticated(ctx.session)) {
     throw new ForbiddenError("You are already registered and logged in.");
   }
 
@@ -67,14 +67,14 @@ async function login(_, args, ctx) {
 }
 
 async function logout(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
+  if (!utils.isAuthenticated(ctx.session)) {
     throw new AuthenticationError('You must be logged in to do that!');
   }
   return await utils.logoutUser(ctx.session);
 }
 
 async function deleteAccount(_, args, ctx) {
-  if (!utils.isAuthenticated(ctx)) {
+  if (!utils.isAuthenticated(ctx.session)) {
     throw new AuthenticationError('You must be logged in to do that!');
   }
 

@@ -1,7 +1,7 @@
 "use strict";
 
 import { utils } from "./utils";
-import { AuthenticationError, ForbiddenError } from "apollo-server-core";
+import { AuthenticationError, ForbiddenError, UserInputError } from "apollo-server-core";
 
 function isLogin(_, args, ctx) {
   return utils.isAuthenticated(ctx.session);

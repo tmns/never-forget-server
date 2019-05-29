@@ -13,7 +13,7 @@ describe("User schema", () => {
       }
     `;
 
-    const typeSchemas = await Promise.all(["user"].map(loadTypeSchema));
+    const typeSchemas = await Promise.all(["user", "deck"].map(loadTypeSchema));
     typeDefs = root + typeSchemas.join(" ");
     schema = schemaToTemplateContext(buildSchema(typeDefs));
   });

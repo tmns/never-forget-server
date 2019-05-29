@@ -13,7 +13,7 @@ import user from "./types/user/user.resolvers";
 
 var MongoDBStore = require("connect-mongodb-session")(session);
 
-var types = ["user"];
+var types = ["user, deck"];
 
 async function start() {
   const rootSchema = `

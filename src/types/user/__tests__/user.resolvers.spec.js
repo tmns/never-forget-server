@@ -1,11 +1,12 @@
-import resolvers from "../user.resolvers";
-import bcrypt from "bcrypt";
 import {
   AuthenticationError,
   ForbiddenError,
   UserInputError
 } from "apollo-server-core";
+import bcrypt from "bcrypt";
+import resolvers from "../user.resolvers";
 import { User } from "../user.model.js";
+import { MemoryStore, Cookie } from "express-session";
 
 describe("User Resolvers", () => {
   test("isLogin returns true if user object acttached to session", () => {
@@ -361,7 +362,7 @@ describe("User Resolvers", () => {
     await expect(User.findById(newUser._id)).toBeTruthy();
   });
 
-  test('signup throws ForbiddenError when user trys to signup while already authenticated', async () => {
+  test("signup throws ForbiddenError when user trys to signup while already authenticated", async () => {
     var args = {
       input: {
         username: "new-user",
@@ -372,18 +373,18 @@ describe("User Resolvers", () => {
     var ctx = {
       session: {
         user: {
-          username: 'username',
-          _id: '123456'
+          username: "username",
+          _id: "123456"
         }
       }
     };
 
-    await expect(
-      resolvers.Mutation.signup(null, args, ctx)
-    ).rejects.toThrow(ForbiddenError);
-  })
+    await expect(resolvers.Mutation.signup(null, args, ctx)).rejects.toThrow(
+      ForbiddenError
+    );
+  });
 
-  test('signup throws UserInputError when password and confirm password do not match', async () => {
+  test("signup throws UserInputError when password and confirm password do not match", async () => {
     var args = {
       input: {
         username: "new-user",
@@ -395,12 +396,12 @@ describe("User Resolvers", () => {
       session: {}
     };
 
-    await expect(
-      resolvers.Mutation.signup(null, args, ctx)
-    ).rejects.toThrow(UserInputError);
-  })
+    await expect(resolvers.Mutation.signup(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
 
-  test('signup throws UserInputError if given username is not valid (ie not between 2 and 16 chars)', async () => {
+  test("signup throws UserInputError if given username is not valid (ie not between 2 and 16 chars)", async () => {
     var args = {
       input: {
         username: "a",
@@ -411,12 +412,12 @@ describe("User Resolvers", () => {
       session: {}
     };
 
-    await expect(
-      resolvers.Mutation.signup(null, args, ctx)
-    ).rejects.toThrow(UserInputError);
-  })
+    await expect(resolvers.Mutation.signup(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
 
-  test('signup throws UserInputError if given password is not valid (ie not between 8 and 64 chars)', async () => {
+  test("signup throws UserInputError if given password is not valid (ie not between 8 and 64 chars)", async () => {
     var args = {
       input: {
         username: "new-user",
@@ -427,13 +428,13 @@ describe("User Resolvers", () => {
       session: {}
     };
 
-    await expect(
-      resolvers.Mutation.signup(null, args, ctx)
-    ).rejects.toThrow(UserInputError);
-  })
+    await expect(resolvers.Mutation.signup(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
 
-  test('signup throws UserInputError if given username already exists in database', async () => {
-    await User.create({ username: "same-name", password: "password"})
+  test("signup throws UserInputError if given username already exists in database", async () => {
+    await User.create({ username: "same-name", password: "password" });
     var args = {
       input: {
         username: "same-name",
@@ -444,25 +445,190 @@ describe("User Resolvers", () => {
       session: {}
     };
 
-    await expect(
-      resolvers.Mutation.signup(null, args, ctx)
-    ).rejects.toThrow(UserInputError);
-  })
+    await expect(resolvers.Mutation.signup(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
 
-  test('login authenticates a user when given a valid username and password combination', async () => {
+  test("login authenticates a user when given a valid username and password combination", async () => {
     var user = await User.create({ username: "name", password: "password" });
     var args = {
       input: {
         username: "name",
         password: "password"
       }
+    };
+    var ctx = {
+      session: {}
+    };
+    await resolvers.Mutation.login(null, args, ctx);
+    expect(`${ctx.session.user._id}`).toBe(`${user._id}`);
+  });
+
+  test("login throws ForbiddenError when user trys to login while already authenticated", async () => {
+    var signedInUser = await User.create({
+      username: "name",
+      password: "password"
+    });
+    var args = {
+      input: {
+        username: "name",
+        password: "password"
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          username: signedInUser.username,
+          _id: signedInUser._id
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.login(null, args, ctx)).rejects.toThrow(
+      ForbiddenError
+    );
+  });
+
+  test("login throws UserInputError if given username does not exist in the database", async () => {
+    var args = {
+      input: {
+        username: "non-existing-user",
+        password: "password"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+    await expect(resolvers.Mutation.login(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
+
+  test("login throws UserInputError if given password does not match password for given username", async () => {
+    await User.create({ username: "name", password: "password" });
+    var args = {
+      input: {
+        username: "name",
+        password: "does-not-match"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+    await expect(resolvers.Mutation.login(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
+
+  test("logout logs user out when user object attached to session", async () => {
+    expect.assertions(2);
+    // create user to first authentcate and obtain valid session with
+    await User.create({ username: "name", password: "password" });
+    var args = {
+      input: {
+        username: "name",
+        password: "password"
+      }
+    };
+
+    // mock session object building
+    var ctx = {
+      sessionStore: new MemoryStore()
+    };
+
+    var cookie = new Cookie();
+
+    // adds valid session object to ctx
+    ctx.sessionStore.createSession(ctx, { cookie });
+
+    await resolvers.Mutation.login(null, args, ctx);
+    expect(ctx.session.user).toBeTruthy();
+    await resolvers.Mutation.logout(null, null, ctx);
+    expect(ctx.session).toBeFalsy();
+  });
+
+  test('logout throws AuthenticationError when user object is not attached to session', async () => {
+    var ctx = {
+      session: {}
+    }
+    await expect(resolvers.Mutation.logout(null, null, ctx)).rejects.toThrow(AuthenticationError)
+  })
+
+  test("deleteAccount logs user out and deletes user from db when user object attached to session and correct password given", async () => {
+    expect.assertions(3);
+    // create user to first authentcate and obtain valid session with
+    await User.create({ username: "name", password: "password" });
+    var loginArgs = {
+      input: {
+        username: "name",
+        password: "password"
+      }
+    };
+    var deleteArgs = {
+      input: {
+        password: "password"
+      }
+    }
+
+    // mock session object building
+    var ctx = {
+      sessionStore: new MemoryStore()
+    };
+
+    var cookie = new Cookie();
+
+    // adds valid session object to ctx
+    ctx.sessionStore.createSession(ctx, { cookie });
+
+    await resolvers.Mutation.login(null, loginArgs, ctx);
+    expect(ctx.session.user).toBeTruthy();
+    var deletedUser = await resolvers.Mutation.deleteAccount(null, deleteArgs, ctx);
+    expect(ctx.session).toBeFalsy();
+    expect(await User.findById(deletedUser._id)).toBeFalsy();
+  });
+
+  test('deleteAccount throws AuthenticationError when user object is not attached to session', async () => {
+    var args = {
+      input: {
+        password: "password"
+      }
     }
     var ctx = {
       session: {}
     }
-    await resolvers.Mutation.login(null, args, ctx);
-    expect(`${ctx.session.user._id}`).toBe(`${user._id}`);
+    await expect(resolvers.Mutation.deleteAccount(null, args, ctx)).rejects.toThrow(AuthenticationError)
   })
 
-  
+  test('deleteAccount throws ForbiddenError when user object attached but incorrect password is given', async () => {
+    expect.assertions(2);
+    // create user to first authentcate and obtain valid session with
+    await User.create({ username: "name", password: "password" });
+    var loginArgs = {
+      input: {
+        username: "name",
+        password: "password"
+      }
+    };
+    var deleteArgs = {
+      input: {
+        password: "incorrect-password"
+      }
+    }
+
+    // mock session object building
+    var ctx = {
+      sessionStore: new MemoryStore()
+    };
+
+    var cookie = new Cookie();
+
+    // adds valid session object to ctx
+    ctx.sessionStore.createSession(ctx, { cookie });
+
+    await resolvers.Mutation.login(null, loginArgs, ctx);
+    expect(ctx.session.user).toBeTruthy();
+
+    await expect(resolvers.Mutation.deleteAccount(null, deleteArgs, ctx)).rejects.toThrow(ForbiddenError)
+  })
 });

@@ -361,5 +361,108 @@ describe("User Resolvers", () => {
     await expect(User.findById(newUser._id)).toBeTruthy();
   });
 
+  test('signup throws ForbiddenError when user trys to signup while already authenticated', async () => {
+    var args = {
+      input: {
+        username: "new-user",
+        password: "password",
+        confirmPassword: "password"
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          username: 'username',
+          _id: '123456'
+        }
+      }
+    };
+
+    await expect(
+      resolvers.Mutation.signup(null, args, ctx)
+    ).rejects.toThrow(ForbiddenError);
+  })
+
+  test('signup throws UserInputError when password and confirm password do not match', async () => {
+    var args = {
+      input: {
+        username: "new-user",
+        password: "new-password",
+        confirmPassword: "not-the-same"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.signup(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  })
+
+  test('signup throws UserInputError if given username is not valid (ie not between 2 and 16 chars)', async () => {
+    var args = {
+      input: {
+        username: "a",
+        password: "test1234"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.signup(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  })
+
+  test('signup throws UserInputError if given password is not valid (ie not between 8 and 64 chars)', async () => {
+    var args = {
+      input: {
+        username: "new-user",
+        password: "1234567"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.signup(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  })
+
+  test('signup throws UserInputError if given username already exists in database', async () => {
+    await User.create({ username: "same-name", password: "password"})
+    var args = {
+      input: {
+        username: "same-name",
+        password: "12345678"
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.signup(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  })
+
+  test('login authenticates a user when given a valid username and password combination', async () => {
+    var user = await User.create({ username: "name", password: "password" });
+    var args = {
+      input: {
+        username: "name",
+        password: "password"
+      }
+    }
+    var ctx = {
+      session: {}
+    }
+    await resolvers.Mutation.login(null, args, ctx);
+    expect(`${ctx.session.user._id}`).toBe(`${user._id}`);
+  })
+
   
 });

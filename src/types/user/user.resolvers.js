@@ -24,8 +24,7 @@ async function updateUsername(_, args, ctx) {
   }
 
   try {
-    var updatedUser = await utils.findAndUpdateUsername(ctx.session, args.input.username);
-    return updatedUser;
+    return await utils.findAndUpdateUsername(ctx.session, args.input.username);
   } catch(err) {
     throw err;
   }
@@ -49,8 +48,7 @@ async function updatePassword(_, args, ctx) {
   }
 
   try {
-    var updatedUser =  await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
-    return updatedUser;
+    return await utils.findAndUpdatePassword(ctx.session, args.input.newPassword);
   } catch(err) {
     throw err;
   }
@@ -66,21 +64,22 @@ async function signup(_, args, ctx) {
   }
 
   try {
-    var createdUser = await utils.createUser(args.input.username, args.input.password);
-    return createdUser;
+    return await utils.createUser(args.input.username, args.input.password);
   } catch(err) {
     throw err;
   }
 }
 
 async function login(_, args, ctx) {
+  if (utils.isAuthenticated(ctx.session)) {
+    throw new ForbiddenError("You are already logged in.");
+  }
   try {
-    var loggedInUser =  await utils.loginUser(
+    return await utils.loginUser(
       args.input.username,
       args.input.password,
       ctx.session
     );
-    return loggedInUser;
   } catch (err) {
     throw err;
   }

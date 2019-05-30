@@ -28,7 +28,8 @@ describe("Deck schema", () => {
     var baseFields = {
       name: "String!",
       description: "String!",
-      createdBy: "User!"
+      _id: "ID!",
+      createdBy: "User"
     };
 
     type.fields.forEach(field => {

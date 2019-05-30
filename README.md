@@ -12,18 +12,20 @@ So far, the following functionality has been implemented:
 * Deauthenticate User (logout)
 * Appropriate authN & AuthZ checks on the above
 
-The following functionality remains:
-
 **-- Deck --**
+* Get Deck(s)
 * Create Deck
 * Update Deck
 * Remove Deck
 * Appropriate authN & AuthZ checks
 
+The following functionality remains:
+
 **-- Card --**
+* Get Card(s)
 * Create Card
 * Update Card
 * Remove Card
 * Appropriate authN & AuthZ checks
 
-*Study functionality will be implemented client side*
+*Study and Export / Import functionality will be implemented client side*

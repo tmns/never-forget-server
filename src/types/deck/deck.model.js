@@ -60,4 +60,12 @@ deckSchema.statics.findAndUpdateDeck = async function(_id, name, description, cr
   return await this.findByIdAndUpdate(_id, { name, description }, { new: true }).lean()
 }
 
+deckSchema.statics.findAndDeleteDeck = async function(_id, createdBy) {
+  var foundDeck = await this.findOne({ _id, createdBy })
+  if (!foundDeck) {
+    throw new UserInputError("A deck with this id doesn't exist");
+  }
+  return await this.findByIdAndDelete(_id).lean();
+}
+
 export const Deck = mongoose.model("deck", deckSchema);

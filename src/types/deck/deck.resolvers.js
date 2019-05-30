@@ -67,6 +67,21 @@ async function updateDeck(_, args, ctx) {
   }
 }
 
+async function removeDeck(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError("You must be logged in to do that!");
+  }
+
+  try {
+    return await Deck.findAndDeleteDeck(
+      args.id,
+      ctx.session.user._id
+    );
+  } catch (err) {
+    throw err;
+  }  
+}
+
 export default {
   Query: {
     deck,
@@ -74,6 +89,7 @@ export default {
   },
   Mutation: {
     newDeck,
-    updateDeck
+    updateDeck,
+    removeDeck
   }
 };

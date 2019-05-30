@@ -1,6 +1,5 @@
 import {
   AuthenticationError,
-  ForbiddenError,
   UserInputError
 } from "apollo-server-core";
 
@@ -320,6 +319,82 @@ describe("Deck Resolvers", () => {
     };
 
     await expect(resolvers.Mutation.updateDeck(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
+
+  test("removeDeck removes deck associated with given id when user object attached to session", async () => {
+    expect.assertions(3);
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+    var args = {
+      id: deck._id
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    var removedDeck = await resolvers.Mutation.removeDeck(null, args, ctx);
+    expect(`${removedDeck._id}`).toBe(`${deck._id}`);
+    expect(`${removedDeck.createdBy}`).toBe(`${deck.createdBy}`);
+    expect(await Deck.findById(deck._id)).toBeFalsy();
+  });
+
+  test("deck throws AuthenticationError if user object not attached to session", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+    var args = {
+      id: deck._id
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(resolvers.Mutation.removeDeck(null, args, ctx)).rejects.toThrow(
+      AuthenticationError
+    );
+  });
+
+  test("deck throws UserInputError if the given deck id doesn't match a deck id associated with the user's id", async () => {
+    var userId = mongoose.Types.ObjectId();
+    await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+
+    // we will create a deck by another user, which will be the id this user attempts to remove - in this way, we also test authZ
+    var otherUserId = mongoose.Types.ObjectId();
+    var otherUsersDeck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: otherUserId
+    });
+
+    var args = {
+      id: otherUsersDeck._id
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.removeDeck(null, args, ctx)).rejects.toThrow(
       UserInputError
     );
   });

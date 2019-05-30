@@ -13,7 +13,7 @@ import user from "./types/user/user.resolvers";
 
 var MongoDBStore = require("connect-mongodb-session")(session);
 
-var types = ["user, deck"];
+var types = ["user", "deck"];
 
 async function start() {
   const rootSchema = `
@@ -81,7 +81,7 @@ async function start() {
   try {
     await app.listen(opts);
     console.log(
-      `GQL server ready at ${serverUrl}/${server.graphqlPath}`
+      `GQL server ready at ${serverUrl}${server.graphqlPath}`
     );
   } catch (err) {
     console.log(`Error bringing up the server: ${err}`);

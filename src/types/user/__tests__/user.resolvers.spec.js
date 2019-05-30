@@ -405,7 +405,8 @@ describe("User Resolvers", () => {
     var args = {
       input: {
         username: "a",
-        password: "test1234"
+        password: "test1234",
+        confirmPassword: "test1234"
       }
     };
     var ctx = {
@@ -421,7 +422,8 @@ describe("User Resolvers", () => {
     var args = {
       input: {
         username: "new-user",
-        password: "1234567"
+        password: "1234567",
+        confirmPassword: "1234567"
       }
     };
     var ctx = {
@@ -438,7 +440,8 @@ describe("User Resolvers", () => {
     var args = {
       input: {
         username: "same-name",
-        password: "12345678"
+        password: "12345678",
+        confirmPassword: "12345678"
       }
     };
     var ctx = {

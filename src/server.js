@@ -14,7 +14,7 @@ import deck from "./types/deck/deck.resolvers";
 
 var MongoDBStore = require("connect-mongodb-session")(session);
 
-var types = ["user", "deck"];
+var types = ["user", "deck", "card"];
 
 async function start() {
   const rootSchema = `

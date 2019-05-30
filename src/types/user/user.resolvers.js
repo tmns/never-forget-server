@@ -37,7 +37,7 @@ async function updateUsername(_, args, ctx) {
   }
 
   try {
-    return await User.findAndUpdateUsername(ctx.session, args.input.username);
+    return await User.findAndUpdateUsername(ctx.session, args.input.username.trim());
   } catch(err) {
     throw err;
   }
@@ -61,7 +61,7 @@ async function updatePassword(_, args, ctx) {
   }
 
   try {
-    return await User.findAndUpdatePassword(ctx.session, args.input.newPassword);
+    return await User.findAndUpdatePassword(ctx.session, args.input.newPassword.trim());
   } catch(err) {
     throw err;
   }
@@ -77,7 +77,7 @@ async function signup(_, args, ctx) {
   }
 
   try {
-    return await User.createUser(args.input.username, args.input.password);
+    return await User.createUser(args.input.username.trim(), args.input.password.trim());
   } catch(err) {
     throw err;
   }

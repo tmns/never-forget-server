@@ -41,8 +41,8 @@ async function newDeck(_, args, ctx) {
 
   try {
     return await Deck.createDeck(
-      args.input.name,
-      args.input.description,
+      args.input.name.trim(),
+      args.input.description.trim(),
       ctx.session.user._id
     );
   } catch (err) {
@@ -58,8 +58,8 @@ async function updateDeck(_, args, ctx) {
   try {
     return await Deck.findAndUpdateDeck(
       args.id,
-      args.input.name,
-      args.input.description,
+      args.input.name.trim(),
+      args.input.description.trim(),
       ctx.session.user._id
     );
   } catch (err) {

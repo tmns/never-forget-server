@@ -2,7 +2,6 @@ type Deck {
   name: String!
   description: String!
   _id: ID!
-  createdBy: User
 }
 
 extend type Query {

@@ -19,9 +19,7 @@ describe("Deck Resolvers", () => {
       createdBy: userId
     });
     var args = {
-      input: {
-        id: deck._id
-      }
+      id: deck._id
     };
     var ctx = {
       session: {
@@ -44,9 +42,7 @@ describe("Deck Resolvers", () => {
       createdBy: userId
     });
     var args = {
-      input: {
-        id: deck._id
-      }
+      id: deck._id
     };
     var ctx = {
       session: {}
@@ -74,9 +70,7 @@ describe("Deck Resolvers", () => {
     });
 
     var args = {
-      input: {
-        id: otherUsersDeck._id
-      }
+      id: otherUsersDeck._id
     };
     var ctx = {
       session: {

@@ -16,7 +16,7 @@ async function deck(_, args, ctx) {
   }
 
   try {
-    return await Deck.findDeck(args.input.id, ctx.session.user._id);
+    return await Deck.findDeck(args.id, ctx.session.user._id);
   } catch (err) {
     throw err;
   }

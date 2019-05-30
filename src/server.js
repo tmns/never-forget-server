@@ -1,7 +1,7 @@
-'use strict';
+"use strict";
 
-import express from 'express';
-import { ApolloServer } from 'apollo-server-express';
+import express from "express";
+import { ApolloServer } from "apollo-server-express";
 import session from "express-session";
 import { merge } from "lodash";
 import ms from "ms";
@@ -10,6 +10,7 @@ import { loadTypeSchema } from "./utils/schema";
 import config from "./config/config";
 import { connect } from "./db";
 import user from "./types/user/user.resolvers";
+import deck from "./types/deck/deck.resolvers";
 
 var MongoDBStore = require("connect-mongodb-session")(session);
 
@@ -23,26 +24,24 @@ async function start() {
     }
   `;
 
-  var schemaTypes = await Promise.all(types.map(loadTypeSchema));  
+  var schemaTypes = await Promise.all(types.map(loadTypeSchema));
 
   var server = new ApolloServer({
     typeDefs: [rootSchema, ...schemaTypes],
-    resolvers: merge({}, user),
+    resolvers: merge({}, user, deck),
     context(req) {
-      return { ...req.req }
+      return { ...req.req };
     }
   });
 
   var app = express();
 
-  var store = new MongoDBStore(
-    {
-      uri: config.dbUrl,
-      collection: "sessions"
-    }
-  );
+  var store = new MongoDBStore({
+    uri: config.dbUrl,
+    collection: "sessions"
+  });
 
-  store.on('error', function(error) {
+  store.on("error", function(error) {
     console.log(error);
   });
 
@@ -80,9 +79,7 @@ async function start() {
 
   try {
     await app.listen(opts);
-    console.log(
-      `GQL server ready at ${serverUrl}${server.graphqlPath}`
-    );
+    console.log(`GQL server ready at ${serverUrl}${server.graphqlPath}`);
   } catch (err) {
     console.log(`Error bringing up the server: ${err}`);
   }

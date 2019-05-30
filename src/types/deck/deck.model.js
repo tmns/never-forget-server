@@ -48,7 +48,8 @@ deckSchema.statics.createDeck = async function(name, description, createdBy) {
     throw new UserInputError('A deck with this name already exists.');
   }
 
-  return await this.create({ name, description, createdBy });
+  var deck = await this.create({ name, description, createdBy });
+  return deck;
 }
 
 export const Deck = mongoose.model("deck", deckSchema);

@@ -27,7 +27,7 @@ const deckSchema = new mongoose.Schema(
 // static functions
 
 deckSchema.statics.findDeck = async function(_id, createdBy) {
-  var deck = await this.findOne({ _id, createdBy });
+  var deck = await this.findOne({ _id, createdBy }).lean();
   if (!deck) {
     throw new UserInputError("A deck with this id doesn't exist");
   }
@@ -35,7 +35,7 @@ deckSchema.statics.findDeck = async function(_id, createdBy) {
 }
 
 deckSchema.statics.findDecks = async function(createdBy) {
-  var decks = await this.find({ createdBy });
+  var decks = await this.find({ createdBy }).lean();
   if (decks.length == 0) {
     throw new UserInputError("You don't have any decks!");
   }
@@ -43,13 +43,21 @@ deckSchema.statics.findDecks = async function(createdBy) {
 }
 
 deckSchema.statics.createDeck = async function(name, description, createdBy) {
-  var foundDeck = await this.findOne({name, createdBy});
+  var foundDeck = await this.findOne({name, createdBy}).lean();
   if (foundDeck) {
     throw new UserInputError('A deck with this name already exists.');
   }
 
   var deck = await this.create({ name, description, createdBy });
   return deck;
+}
+
+deckSchema.statics.findAndUpdateDeck = async function(_id, name, description, createdBy) {
+  var foundDeck = await this.findOne({_id, createdBy});
+  if (!foundDeck) {
+    throw new UserInputError("A deck with this id doesn't exist");
+  }
+  return await this.findByIdAndUpdate(_id, { name, description }, { new: true }).lean()
 }
 
 export const Deck = mongoose.model("deck", deckSchema);

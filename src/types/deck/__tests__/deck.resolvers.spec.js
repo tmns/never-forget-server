@@ -236,4 +236,91 @@ describe("Deck Resolvers", () => {
       UserInputError
     );
   });
+
+  test("updateDeck updates the deck associated with the given id when session contains user object and inputs are valid", async () => {
+    expect.assertions(3);
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+    var args = {
+      id: deck._id,
+      input: {
+        name: "new-name",
+        description: "new-description"  
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    var updatedDeck = await resolvers.Mutation.updateDeck(null, args, ctx);
+    expect(`${updatedDeck._id}`).toBe(`${deck._id}`);
+    expect(updatedDeck.name).toBe(args.input.name);
+    expect(updatedDeck.description).toBe(args.input.description);
+  });
+
+  test("updateDeck throws AuthenticationError if user object not attached to session", async () => {
+    var deck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: mongoose.Types.ObjectId()
+    });
+    var args = {
+      id: deck._id,
+      input: {
+        name: "new-deck",
+        description: "description"  
+      }
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.updateDeck(null, args, ctx)
+    ).rejects.toThrow(AuthenticationError);
+  });
+
+  test("updateDeck throws UserInputError if the given deck id doesn't match a deck id associated with the user's id", async () => {
+    var userId = mongoose.Types.ObjectId();
+    await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+
+    // we will create a deck by another user, which will be the id this user attempts to update in order to also test authZ
+    var otherUserId = mongoose.Types.ObjectId();
+    var otherUsersDeck = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: otherUserId
+    });
+
+    var args = {
+      id: otherUsersDeck._id,
+      input: {
+        name: 'new-name',
+        description: 'new-description'  
+      }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(resolvers.Mutation.updateDeck(null, args, ctx)).rejects.toThrow(
+      UserInputError
+    );
+  });
 });

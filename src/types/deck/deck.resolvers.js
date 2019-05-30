@@ -50,12 +50,30 @@ async function newDeck(_, args, ctx) {
   }
 }
 
+async function updateDeck(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError("You must be logged in to do that!");
+  }
+
+  try {
+    return await Deck.findAndUpdateDeck(
+      args.id,
+      args.input.name,
+      args.input.description,
+      ctx.session.user._id
+    );
+  } catch (err) {
+    throw err;
+  }
+}
+
 export default {
   Query: {
     deck,
     decks
   },
   Mutation: {
-    newDeck
+    newDeck,
+    updateDeck
   }
 };

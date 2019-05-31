@@ -2,6 +2,8 @@
 
 Backend Server / API for Never Forget, a spaced repetition learning app. The server uses MongoDB as its data source, with GraphQL as the API query language. Apollo and Express handle the requests / responses. 
 
+The goal is for this to be used as a backend to a full stack spaced repetition learning app. In the meantime, a fully implemented CLI version is available to experiment with here: [Never Forget CLI](https://github.com/tmns/never-forget-cli).
+
 ## Features
 So far, all of the main functionality has been implemented. You can:
 

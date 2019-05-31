@@ -1,6 +1,7 @@
-import { Mongoose } from "mongoose";
+import mongoose from "mongoose";
+import { UserInputError } from "apollo-server-core";
 
-const cardSchema = new Mongoose.Schema(
+const cardSchema = new mongoose.Schema(
   {
     prompt: {
       type: String,
@@ -36,8 +37,8 @@ const cardSchema = new Mongoose.Schema(
       type: Number,
       required: true
     },
-    deck: {
-      type: Mongoose.SchemaTypes.ObjectId,
+    deckId: {
+      type: mongoose.SchemaTypes.ObjectId,
       ref: 'deck',
       required: true
     },
@@ -48,5 +49,15 @@ const cardSchema = new Mongoose.Schema(
     }
   }
 )
+
+// static functions
+
+cardSchema.statics.findCard = async function(_id, createdBy) {
+  var card = await this.findOne({ _id, createdBy }).lean();
+  if (!card) {
+    throw new UserInputError("A card with this id doesn't exist");
+  }
+  return card;
+}
 
 export const Card = mongoose.model('card', cardSchema)

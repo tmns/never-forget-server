@@ -28,7 +28,7 @@ async function start() {
 
   var server = new ApolloServer({
     typeDefs: [rootSchema, ...schemaTypes],
-    resolvers: merge({}, user, deck),
+    resolvers: merge({}, user, deck, card),
     context(req) {
       return { ...req.req };
     }

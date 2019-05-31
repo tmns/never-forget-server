@@ -60,7 +60,7 @@ describe("Deck Resolvers", () => {
       createdBy: userId
     });
 
-    // we will create a deck by another user, which will be the id this user attempts to request - in this way, we also test authZ at the same time
+    // we will create a deck by another user, which will be the id this user attempts to request - in this way, we also test authZ
     var otherUserId = mongoose.Types.ObjectId();
     var otherUsersDeck = await Deck.create({
       name: "name",

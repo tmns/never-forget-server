@@ -48,8 +48,7 @@ deckSchema.statics.createDeck = async function(name, description, createdBy) {
     throw new UserInputError("A deck with this name already exists.");
   }
 
-  var deck = await this.create({ name, description, createdBy });
-  return deck;
+  return await this.create({ name, description, createdBy });
 };
 
 deckSchema.statics.findAndUpdateDeck = async function(

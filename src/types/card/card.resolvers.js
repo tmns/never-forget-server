@@ -30,12 +30,27 @@ async function cards(_, args, ctx) {
   }
 }
 
+async function newCard(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError('You must be logged in to do that!');
+  }
+
+  try {
+    return await Card.createCard(
+      args.input,
+      ctx.session.user._id
+    )
+  } catch(err) {
+    throw err;
+  }
+}
+
 export default {
   Query: {
     card,
     cards
   },
   Mutation: {
-
+    newCard
   }
 }

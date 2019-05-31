@@ -11,6 +11,7 @@ import config from "./config/config";
 import { connect } from "./db";
 import user from "./types/user/user.resolvers";
 import deck from "./types/deck/deck.resolvers";
+import card from "./types/card/card.resolvers";
 
 var MongoDBStore = require("connect-mongodb-session")(session);
 

@@ -18,11 +18,24 @@ async function card(_, args, ctx) {
   }
 }
 
+async function cards(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError('You must be logged in to do that!');
+  }
+
+  try {
+    return await Card.findCards(args.deckId, ctx.session.user._id);
+  } catch (err) {
+    throw err;
+  }
+}
+
 export default {
   Query: {
-    card
+    card,
+    cards
   },
   Mutation: {
-    
+
   }
 }

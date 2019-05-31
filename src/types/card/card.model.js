@@ -60,4 +60,12 @@ cardSchema.statics.findCard = async function(_id, createdBy) {
   return card;
 }
 
+cardSchema.statics.findCards = async function(deckId, createdBy) {
+  var cards = await this.find({ deckId, createdBy });
+  if (cards.length == 0) {
+    throw new UserInputError("No cards associated with this deck!");
+  }
+  return cards;
+}
+
 export const Card = mongoose.model('card', cardSchema)

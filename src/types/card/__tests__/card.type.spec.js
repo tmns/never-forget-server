@@ -110,7 +110,7 @@ describe("Card schema", () => {
     var server = mockServer(typeDefs);
     var query = `
       {
-        cards {
+        cards(deckId: "123123") {
           target
           promptExample
           targetExample

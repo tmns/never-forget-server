@@ -12,7 +12,7 @@ type Card {
 
 extend type Query {
   card(id: ID!): Card!
-  cards: [Card]!
+  cards(deckId: ID!): [Card]!
 }
 
 input NewCardInput {

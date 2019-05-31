@@ -11,7 +11,6 @@ const deckSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: true,
       trim: true,
       maxlength: 40
     },
@@ -29,7 +28,7 @@ const deckSchema = new mongoose.Schema(
 deckSchema.statics.findDeck = async function(_id, createdBy) {
   var deck = await this.findOne({ _id, createdBy }).lean();
   if (!deck) {
-    throw new UserInputError("A deck with this id doesn't exist");
+    throw new UserInputError(`No deck with id ${_id} found`);
   }
   return deck;
 };
@@ -37,7 +36,7 @@ deckSchema.statics.findDeck = async function(_id, createdBy) {
 deckSchema.statics.findDecks = async function(createdBy) {
   var decks = await this.find({ createdBy }).lean();
   if (decks.length == 0) {
-    throw new UserInputError("You don't have any decks!");
+    throw new UserInputError("No decks found");
   }
   return decks;
 };
@@ -45,25 +44,37 @@ deckSchema.statics.findDecks = async function(createdBy) {
 deckSchema.statics.createDeck = async function(name, description, createdBy) {
   var foundDeck = await this.findOne({ name, createdBy }).lean();
   if (foundDeck) {
-    throw new UserInputError("A deck with this name already exists.");
+    throw new UserInputError(`A deck with name '${name}' already exists`);
   }
 
   return await this.create({ name, description, createdBy });
 };
 
-deckSchema.statics.findAndUpdateDeck = async function(
-  _id,
-  name,
-  description,
-  createdBy
-) {
+deckSchema.statics.findAndUpdateDeck = async function(_id, props, createdBy) {
   var foundDeck = await this.findOne({ _id, createdBy });
   if (!foundDeck) {
-    throw new UserInputError("A deck with this id doesn't exist");
+    throw new UserInputError(`No deck with id ${_id} found`);
   }
+
+  var tProps = trimProps(props);
+
+  // if user updating name, check if another deck already exists with same name
+  if (tProps.hasOwnProperty("name")) {
+    var foundDeckWithSameName = await this.findOne({
+      name: tProps.name,
+      createdBy
+    }).lean();
+
+    if (foundDeckWithSameName) {
+      throw new UserInputError(
+        `A deck with name '${tProps.name}' already exists`
+      );
+    }
+  }
+
   return await this.findByIdAndUpdate(
     _id,
-    { name, description },
+    { ...tProps, createdBy },
     { new: true }
   ).lean();
 };
@@ -71,9 +82,18 @@ deckSchema.statics.findAndUpdateDeck = async function(
 deckSchema.statics.findAndDeleteDeck = async function(_id, createdBy) {
   var foundDeck = await this.findOne({ _id, createdBy });
   if (!foundDeck) {
-    throw new UserInputError("A deck with this id doesn't exist");
+    throw new UserInputError(`No deck with id ${_id} found`);
   }
   return await this.findByIdAndDelete(_id).lean();
 };
+
+// ********** helper funcs
+function trimProps(props) {
+  var tProps = {};
+  for (let key of Object.keys(props)) {
+    tProps[key] = props[key].trim();
+  }
+  return tProps;
+}
 
 export const Deck = mongoose.model("deck", deckSchema);

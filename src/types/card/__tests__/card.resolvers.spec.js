@@ -79,7 +79,11 @@ describe("Card Resolvers", () => {
   test("cards returns all cards associated with a given deck id and user id combo if user object attached to session", async () => {
     expect.assertions(9);
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     await Card.create(createCardObject("promp1", deck._id, userId));
     await Card.create(createCardObject("promp2", deck._id, userId));
     await Card.create(createCardObject("promp3", deck._id, userId));
@@ -111,7 +115,11 @@ describe("Card Resolvers", () => {
 
   test("cards throws AuthenticationError when user object not attached to session", async () => {
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     await Card.create(createCardObject(null, deck._id, userId));
 
     var ctx = {
@@ -128,7 +136,11 @@ describe("Card Resolvers", () => {
 
     // create other user and associate cards with their id to also test authZ
     var otherUserId = mongoose.Types.ObjectId();
-    var otherUserDeck = await Deck.create({name: "name", description: "desc", createdBy: otherUserId})
+    var otherUserDeck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: otherUserId
+    });
     await Card.create(createCardObject(null, otherUserDeck._id, otherUserId));
     await Card.create(createCardObject(null, otherUserDeck._id, otherUserId));
 
@@ -152,7 +164,11 @@ describe("Card Resolvers", () => {
   test("newCard returns new card object if user object attached to session and valid inputs given", async () => {
     expect.assertions(9);
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     var cardObject = createCardObject(null, deck._id);
     var args = {
       input: cardObject
@@ -174,7 +190,11 @@ describe("Card Resolvers", () => {
 
   test("newCard throws AuthenticationError if user object not attached to session", async () => {
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     var cardObject = createCardObject(null, deck._id);
     var args = {
       input: cardObject
@@ -193,7 +213,11 @@ describe("Card Resolvers", () => {
 
     // create other user and associate cards with their id to also test authZ
     var otherUserId = mongoose.Types.ObjectId();
-    var otherUserDeck = await Deck.create({name: "name", description: "desc", createdBy: otherUserId})
+    var otherUserDeck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: otherUserId
+    });
     await Card.create(createCardObject(null, otherUserDeck._id, otherUserId));
     await Card.create(createCardObject(null, otherUserDeck._id, otherUserId));
 
@@ -212,11 +236,15 @@ describe("Card Resolvers", () => {
     await expect(resolvers.Mutation.newCard(null, args, ctx)).rejects.toThrow(
       UserInputError
     );
-  })
+  });
 
   test("newCard throws UserInputError if given prompt already exists and is associated with given deckId and userId", async () => {
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     var cardObject = createCardObject("same-prompt", deck._id, userId);
     await Card.create(cardObject);
 
@@ -238,7 +266,11 @@ describe("Card Resolvers", () => {
 
   test("newCard throws UserInputError if given prompt is invalid (ie has a length of less than 1 or greater than 300", async () => {
     var userId = mongoose.Types.ObjectId();
-    var deck = await Deck.create({name: "name", description: "desc", createdBy: userId})
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
     var args = {
       input: createCardObject("   ", deck._id)
     };
@@ -253,5 +285,141 @@ describe("Card Resolvers", () => {
     await expect(resolvers.Mutation.newCard(null, args, ctx)).rejects.toThrow(
       UserInputError
     );
+  });
+
+  test("updateCard updates the card associated with given deck id and user id combo when session contains user object and inputs are valid", async () => {
+    expect.assertions(2);
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var existingCard = await Card.create(
+      createCardObject(null, deck._id, userId)
+    );
+    var args = {
+      id: existingCard._id,
+      input: createCardObject("updated-prompt", deck._id)
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    var updatedCard = await resolvers.Mutation.updateCard(null, args, ctx);
+    expect(`${updatedCard._id}`).toBe(`${existingCard._id}`);
+    expect(updatedCard.prompt).toBe(args.input.prompt);
+  });
+
+  test("updateCard throws AuthenticationError if user object not attached to session", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var existingCard = await Card.create(
+      createCardObject(null, deck._id, userId)
+    );
+    var args = {
+      id: existingCard._id,
+      input: createCardObject("new-prompt", deck._id)
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.updateCard(null, args, ctx)
+    ).rejects.toThrow(AuthenticationError);
+  });
+
+  test("updateCard throws UserInputError if no deck associated with given deckId and userId combo exists.", async () => {
+    var userId = mongoose.Types.ObjectId();
+
+    // create other user and associate cards with their id to also test authZ
+    var otherUserId = mongoose.Types.ObjectId();
+    var otherUserDeck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: otherUserId
+    });
+    var existingCard = Card.create(
+      createCardObject(null, otherUserDeck._id, otherUserId)
+    );
+
+    var args = {
+      id: existingCard._id,
+      input: createCardObject("new-prompt", otherUserDeck._id)
+    };
+
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(
+      resolvers.Mutation.updateCard(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  });
+
+  test("updateCard throws UserInputError if given prompt already exists and is associated with given deckId and userId", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var cardObject1 = createCardObject("prompt", deck._id, userId);
+    var existingCard1 = await Card.create(cardObject1);
+    await Card.create(createCardObject("same-prompt", deck._id, userId));
+
+    var args = {
+      id: existingCard1._id,
+      input: { prompt: "same-prompt" }
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(
+      resolvers.Mutation.updateCard(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  });
+
+  test("updateCard throws UserInputError if given prompt is invalid (ie has a length of less than 1 or greater than 300", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var existingCard = Card.create(createCardObject(null, deck._id, userId));
+    var args = {
+      id: existingCard._id,
+      input: createCardObject("   ", deck._id)
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(
+      resolvers.Mutation.updateCard(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
   });
 });

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import { isValidUsername, isValidPassword } from '../../utils/validation';
-import { UserInputError } from 'apollo-server-core';
+import { isValidUsername, isValidPassword } from "../../utils/validation";
+import { UserInputError } from "apollo-server-core";
 
 const userSchema = new mongoose.Schema(
   {
@@ -58,14 +58,14 @@ userSchema.statics.createUser = async function(username, password) {
   var userNames = users.map(userObject => userObject.username);
 
   if (userNames.includes(username)) {
-    throw new UserInputError("Another user with this username already exists.");
+    throw new UserInputError(`Another user with username '${username}' already exists.`);
   }
 
   return await this.create({
     username,
     password
   });
-}
+};
 
 userSchema.statics.findAndUpdateUsername = async function(session, username) {
   if (!isValidUsername(username)) {
@@ -75,7 +75,7 @@ userSchema.statics.findAndUpdateUsername = async function(session, username) {
   }
   if (session.user.username == username) {
     throw new UserInputError(
-      "Your new username must be different than your current username."
+      "New username must be different than current username."
     );
   }
   var user = await this.findByIdAndUpdate(
@@ -92,7 +92,7 @@ userSchema.statics.findAndUpdateUsername = async function(session, username) {
   session.user.username = username;
 
   return { _id: user._id, username: user.username };
-}
+};
 
 userSchema.statics.findAndUpdatePassword = async function(session, password) {
   if (!isValidPassword(password)) {
@@ -115,13 +115,13 @@ userSchema.statics.findAndUpdatePassword = async function(session, password) {
     .exec();
 
   return { _id: user._id, username: user.username };
-}
+};
 
-userSchema.statics.removeUser = async function (session) {
+userSchema.statics.removeUser = async function(session) {
   var removedUser = session.user;
   await session.destroy();
   await User.findByIdAndDelete(session.user._id);
   return removedUser;
-}
+};
 
 export const User = mongoose.model("user", userSchema);

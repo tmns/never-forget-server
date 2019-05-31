@@ -3,7 +3,7 @@ import { UserInputError } from "apollo-server-core";
 
 import { hasValidInputs } from "../../utils/validation";
 
-import { Deck } from '../deck/deck.model';
+import { Deck } from "../deck/deck.model";
 
 const cardSchema = new mongoose.Schema({
   prompt: {
@@ -57,28 +57,28 @@ const cardSchema = new mongoose.Schema({
 cardSchema.statics.findCard = async function(_id, createdBy) {
   var foundCard = await this.findOne({ _id, createdBy }).lean();
   if (!foundCard) {
-    throw new UserInputError("A card with this id doesn't exist");
+    throw new UserInputError(`No card with id ${_id} found`);
   }
-  
+
   return foundCard;
 };
 
 cardSchema.statics.findCards = async function(deckId, createdBy) {
   // make sure user has access to given deck
-  var foundDeck = await Deck.findOne({ _id: deckId, createdBy })
+  var foundDeck = await Deck.findOne({ _id: deckId, createdBy });
   if (!foundDeck) {
-    throw new UserInputError("Deck doesn't exist.")
+    throw new UserInputError(`No deck with id ${deckId} found`);
   }
 
-  return await this.find({ deckId, createdBy }).lean();;
+  return await this.find({ deckId, createdBy }).lean();
 };
 
 cardSchema.statics.createCard = async function(props, createdBy) {
-  var foundDeck = await Deck.findOne({ _id: props.deckId, createdBy })
+  var foundDeck = await Deck.findOne({ _id: props.deckId, createdBy });
   if (!foundDeck) {
-    throw new UserInputError("Deck doesn't exist.");
+    throw new UserInputError(`No deck with id ${props.deckId} found`);
   }
-  
+
   // trim white space from prompt, target, and their examples
   var tProps = trimProps(props);
 
@@ -94,10 +94,50 @@ cardSchema.statics.createCard = async function(props, createdBy) {
     createdBy
   }).lean();
   if (foundCard) {
-    throw new UserInputError("A card with this prompt already exists.");
+    throw new UserInputError(
+      `A card with prompt '${tProps.prompt}' already exists`
+    );
   }
 
   return await this.create({ ...tProps, createdBy });
+};
+
+cardSchema.statics.findAndUpdateCard = async function(_id, props, createdBy) {
+  var foundDeck = await Deck.findOne({ _id: props.deckId, createdBy });
+  if (!foundDeck) {
+    throw new UserInputError(`No deck with id ${props.deckId} found`);
+  }
+
+  var tProps = trimProps(props);
+
+  if (!hasValidInputs(tProps)) {
+    throw new UserInputError("Invalid inputs.");
+  }
+
+  if (tProps.hasOwnProperty("prompt")) {
+    var foundCardWithSamePrompt = await this.findOne({
+      prompt: tProps.prompt,
+      deckId: props.deckId,
+      createdBy
+    }).lean();
+    
+    if (foundCardWithSamePrompt) {
+      throw new UserInputError(
+        `A card with prompt '${tProps.prompt}' already exists`
+      );
+    }
+  }
+
+  var foundCard = await this.findOne({ _id, createdBy });
+  if (!foundCard) {
+    throw new UserInputError(`No card with id ${_id} found`);
+  }
+
+  return await this.findByIdAndUpdate(
+    _id,
+    { ...tProps, createdBy },
+    { new: true }
+  ).lean();
 };
 
 // ********** helper funcs

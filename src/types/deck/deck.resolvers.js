@@ -7,7 +7,7 @@ import { Deck } from "./deck.model";
 
 async function deck(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError("You must be logged in to do that!");
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
@@ -19,7 +19,7 @@ async function deck(_, args, ctx) {
 
 async function decks(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError("You must be logged in to do that!");
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
@@ -31,7 +31,7 @@ async function decks(_, args, ctx) {
 
 async function newDeck(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError("You must be logged in to do that!");
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
@@ -47,14 +47,13 @@ async function newDeck(_, args, ctx) {
 
 async function updateDeck(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError("You must be logged in to do that!");
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
     return await Deck.findAndUpdateDeck(
       args.id,
-      args.input.name.trim(),
-      args.input.description.trim(),
+      args.input,
       ctx.session.user._id
     );
   } catch (err) {
@@ -64,17 +63,14 @@ async function updateDeck(_, args, ctx) {
 
 async function removeDeck(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError("You must be logged in to do that!");
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
-    return await Deck.findAndDeleteDeck(
-      args.id,
-      ctx.session.user._id
-    );
+    return await Deck.findAndDeleteDeck(args.id, ctx.session.user._id);
   } catch (err) {
     throw err;
-  }  
+  }
 }
 
 export default {

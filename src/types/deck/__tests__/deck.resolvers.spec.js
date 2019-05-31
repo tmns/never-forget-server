@@ -1,7 +1,4 @@
-import {
-  AuthenticationError,
-  UserInputError
-} from "apollo-server-core";
+import { AuthenticationError, UserInputError } from "apollo-server-core";
 
 import mongoose from "mongoose";
 
@@ -248,7 +245,7 @@ describe("Deck Resolvers", () => {
       id: deck._id,
       input: {
         name: "new-name",
-        description: "new-description"  
+        description: "new-description"
       }
     };
     var ctx = {
@@ -275,7 +272,7 @@ describe("Deck Resolvers", () => {
       id: deck._id,
       input: {
         name: "new-deck",
-        description: "description"  
+        description: "description"
       }
     };
     var ctx = {
@@ -306,8 +303,8 @@ describe("Deck Resolvers", () => {
     var args = {
       id: otherUsersDeck._id,
       input: {
-        name: 'new-name',
-        description: 'new-description'  
+        name: "new-name",
+        description: "new-description"
       }
     };
     var ctx = {
@@ -318,9 +315,42 @@ describe("Deck Resolvers", () => {
       }
     };
 
-    await expect(resolvers.Mutation.updateDeck(null, args, ctx)).rejects.toThrow(
-      UserInputError
-    );
+    await expect(
+      resolvers.Mutation.updateDeck(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
+  });
+
+  test("updateDeck throws UserInputError if given name already exists and is associated with userId", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var existingDeck1 = await Deck.create({
+      name: "name",
+      description: "description",
+      createdBy: userId
+    });
+    await Deck.create({
+      name: "same-name",
+      description: "",
+      createdBy: userId
+    });
+
+    var args = {
+      id: existingDeck1._id,
+      input: {
+        name: "same-name"
+      }
+    };
+
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    await expect(
+      resolvers.Mutation.updateDeck(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
   });
 
   test("removeDeck removes deck associated with given id when user object attached to session", async () => {
@@ -362,9 +392,9 @@ describe("Deck Resolvers", () => {
       session: {}
     };
 
-    await expect(resolvers.Mutation.removeDeck(null, args, ctx)).rejects.toThrow(
-      AuthenticationError
-    );
+    await expect(
+      resolvers.Mutation.removeDeck(null, args, ctx)
+    ).rejects.toThrow(AuthenticationError);
   });
 
   test("deck throws UserInputError if the given deck id doesn't match a deck id associated with the user's id", async () => {
@@ -394,8 +424,8 @@ describe("Deck Resolvers", () => {
       }
     };
 
-    await expect(resolvers.Mutation.removeDeck(null, args, ctx)).rejects.toThrow(
-      UserInputError
-    );
+    await expect(
+      resolvers.Mutation.removeDeck(null, args, ctx)
+    ).rejects.toThrow(UserInputError);
   });
 });

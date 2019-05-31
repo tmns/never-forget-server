@@ -1,14 +1,14 @@
-'use strict';
+"use strict";
 
-import { AuthenticationError } from 'apollo-server-core';
+import { AuthenticationError } from "apollo-server-core";
 
-import { isAuthenticated } from '../../utils/auth';
-import { Deck } from '../deck/deck.model';
-import { Card } from './card.model';
+import { isAuthenticated } from "../../utils/auth";
+import { Deck } from "../deck/deck.model";
+import { Card } from "./card.model";
 
 async function card(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
@@ -20,7 +20,7 @@ async function card(_, args, ctx) {
 
 async function cards(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
@@ -32,15 +32,28 @@ async function cards(_, args, ctx) {
 
 async function newCard(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   try {
-    return await Card.createCard(
+    return await Card.createCard(args.input, ctx.session.user._id);
+  } catch (err) {
+    throw err;
+  }
+}
+
+async function updateCard(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError("User not authenticated");
+  }
+
+  try {
+    return await Card.findAndUpdateCard(
+      args.id,
       args.input,
       ctx.session.user._id
-    )
-  } catch(err) {
+    );
+  } catch (err) {
     throw err;
   }
 }
@@ -51,6 +64,7 @@ export default {
     cards
   },
   Mutation: {
-    newCard
+    newCard,
+    updateCard
   }
-}
+};

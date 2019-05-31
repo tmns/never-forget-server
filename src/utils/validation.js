@@ -21,8 +21,4 @@ function hasValidInputs({ prompt, target, promptExample, targetExample }) {
   return true;
 }
 
-export {
-  isValidUsername,
-  isValidPassword,
-  hasValidInputs
-}
+export { isValidUsername, isValidPassword, hasValidInputs };

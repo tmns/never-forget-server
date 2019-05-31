@@ -1,20 +1,19 @@
 "use strict";
 
-import { User } from './user.model';
+import { User } from "./user.model";
 
-import { 
-  AuthenticationError, 
-  ForbiddenError, 
-  UserInputError 
+import {
+  AuthenticationError,
+  ForbiddenError,
+  UserInputError
 } from "apollo-server-core";
 
-import { 
-  isAuthenticated, 
-  isAuthorized, 
-  loginUser, 
-  logoutUser 
-} from '../../utils/auth';
-
+import {
+  isAuthenticated,
+  isAuthorized,
+  loginUser,
+  logoutUser
+} from "../../utils/auth";
 
 function isLogin(_, args, ctx) {
   return isAuthenticated(ctx.session);
@@ -22,14 +21,14 @@ function isLogin(_, args, ctx) {
 
 function whoami(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
   return ctx.session.user;
 }
 
 async function updateUsername(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   if (!(await isAuthorized(ctx.session.user._id, args.input.password))) {
@@ -37,15 +36,18 @@ async function updateUsername(_, args, ctx) {
   }
 
   try {
-    return await User.findAndUpdateUsername(ctx.session, args.input.username.trim());
-  } catch(err) {
+    return await User.findAndUpdateUsername(
+      ctx.session,
+      args.input.username.trim()
+    );
+  } catch (err) {
     throw err;
   }
 }
 
 async function updatePassword(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   if (!(await isAuthorized(ctx.session.user._id, args.input.password))) {
@@ -53,7 +55,9 @@ async function updatePassword(_, args, ctx) {
   }
 
   if (args.input.password == args.input.newPassword) {
-    throw new UserInputError('New password must be different than current password.');
+    throw new UserInputError(
+      "New password must be different than current password."
+    );
   }
 
   if (args.input.newPassword != args.input.confirmPassword) {
@@ -61,15 +65,18 @@ async function updatePassword(_, args, ctx) {
   }
 
   try {
-    return await User.findAndUpdatePassword(ctx.session, args.input.newPassword.trim());
-  } catch(err) {
+    return await User.findAndUpdatePassword(
+      ctx.session,
+      args.input.newPassword.trim()
+    );
+  } catch (err) {
     throw err;
   }
 }
 
 async function signup(_, args, ctx) {
   if (isAuthenticated(ctx.session)) {
-    throw new ForbiddenError("You are already registered and logged in.");
+    throw new ForbiddenError("User already registered and authenticated");
   }
 
   if (args.input.password != args.input.confirmPassword) {
@@ -77,15 +84,18 @@ async function signup(_, args, ctx) {
   }
 
   try {
-    return await User.createUser(args.input.username.trim(), args.input.password.trim());
-  } catch(err) {
+    return await User.createUser(
+      args.input.username.trim(),
+      args.input.password.trim()
+    );
+  } catch (err) {
     throw err;
   }
 }
 
 async function login(_, args, ctx) {
   if (isAuthenticated(ctx.session)) {
-    throw new ForbiddenError("You are already logged in.");
+    throw new ForbiddenError("User already authenticated");
   }
   try {
     return await loginUser(
@@ -100,14 +110,14 @@ async function login(_, args, ctx) {
 
 async function logout(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
   return await logoutUser(ctx.session);
 }
 
 async function deleteAccount(_, args, ctx) {
   if (!isAuthenticated(ctx.session)) {
-    throw new AuthenticationError('You must be logged in to do that!');
+    throw new AuthenticationError("User not authenticated");
   }
 
   if (!(await isAuthorized(ctx.session.user._id, args.input.password))) {

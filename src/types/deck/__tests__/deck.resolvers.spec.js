@@ -353,7 +353,7 @@ describe("Deck Resolvers", () => {
     ).rejects.toThrow(UserInputError);
   });
 
-  test("removeDeck removes deck associated with given id when user object attached to session", async () => {
+  test("removeDeck removes deck associated with given id and user id combo when user object attached to session", async () => {
     expect.assertions(3);
     var userId = mongoose.Types.ObjectId();
     var deck = await Deck.create({
@@ -378,7 +378,7 @@ describe("Deck Resolvers", () => {
     expect(await Deck.findById(deck._id)).toBeFalsy();
   });
 
-  test("deck throws AuthenticationError if user object not attached to session", async () => {
+  test("removeDeck throws AuthenticationError if user object not attached to session", async () => {
     var userId = mongoose.Types.ObjectId();
     var deck = await Deck.create({
       name: "name",
@@ -397,7 +397,7 @@ describe("Deck Resolvers", () => {
     ).rejects.toThrow(AuthenticationError);
   });
 
-  test("deck throws UserInputError if the given deck id doesn't match a deck id associated with the user's id", async () => {
+  test("removeDeck throws UserInputError if the given deck id doesn't match a deck id associated with the user's id", async () => {
     var userId = mongoose.Types.ObjectId();
     await Deck.create({
       name: "name",

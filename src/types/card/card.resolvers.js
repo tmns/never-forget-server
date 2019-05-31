@@ -58,6 +58,21 @@ async function updateCard(_, args, ctx) {
   }
 }
 
+async function removeCard(_, args, ctx) {
+  if (!isAuthenticated(ctx.session)) {
+    throw new AuthenticationError("User not authenticated");
+  }
+
+  try {
+    return await Card.findAndDeleteCard(
+      args.id,
+      ctx.session.user._id
+    );
+  } catch (err) {
+    throw err;
+  }  
+}
+
 export default {
   Query: {
     card,
@@ -65,6 +80,7 @@ export default {
   },
   Mutation: {
     newCard,
-    updateCard
+    updateCard,
+    removeCard
   }
 };

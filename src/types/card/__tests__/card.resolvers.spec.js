@@ -422,4 +422,78 @@ describe("Card Resolvers", () => {
       resolvers.Mutation.updateCard(null, args, ctx)
     ).rejects.toThrow(UserInputError);
   });
+
+  test("removeCard removes card associated with given id and user id combo when user object attached to session", async () => {
+    expect.assertions(3);
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var existingCard = await Card.create(createCardObject(null, deck._id, userId));
+    var args = {
+      id: existingCard._id
+    };
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    };
+
+    var removedCard = await resolvers.Mutation.removeCard(null, args, ctx);
+    expect(`${removedCard._id}`).toBe(`${existingCard._id}`);
+    expect(`${removedCard.createdBy}`).toBe(`${existingCard.createdBy}`);
+    expect(await Card.findById(existingCard._id)).toBeFalsy();
+  })
+
+  test("removeCard throws AuthenticationError when user object not attached to session", async () => {
+    var userId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var existingCard = await Card.create(
+      createCardObject(null, deck._id, userId)
+    );
+    var args = {
+      id: existingCard._id
+    };
+    var ctx = {
+      session: {}
+    };
+
+    await expect(
+      resolvers.Mutation.updateCard(null, args, ctx)
+    ).rejects.toThrow(AuthenticationError);
+  })
+
+  test("removeCard throws UserInputError if given card id does not match a card id associated with the user's id", async () => {
+    var userId = mongoose.Types.ObjectId();
+
+    // we will create a card by another user, which will be the id this user attempts to remove - in this way, we also test authZ
+    var otherUserId = mongoose.Types.ObjectId();
+    var deck = await Deck.create({
+      name: "name",
+      description: "desc",
+      createdBy: userId
+    });
+    var otherUserCard = await Card.create(createCardObject(null, deck._id, otherUserId));
+
+    var args = {
+      id: otherUserCard._id
+    }
+    var ctx = {
+      session: {
+        user: {
+          _id: userId
+        }
+      }
+    }
+
+    await expect(resolvers.Mutation.removeCard(null, args, ctx)).rejects.toThrow(UserInputError);
+  })
 });

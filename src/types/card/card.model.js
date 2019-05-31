@@ -140,6 +140,14 @@ cardSchema.statics.findAndUpdateCard = async function(_id, props, createdBy) {
   ).lean();
 };
 
+cardSchema.statics.findAndDeleteCard = async function(_id, createdBy) {
+  var foundCard = await this.findOne({ _id, createdBy });
+  if (!foundCard) {
+    throw new UserInputError(`No card with id ${_id} found`);
+  }
+  return await this.findByIdAndDelete(_id).lean();
+};
+
 // ********** helper funcs
 
 function trimProps(props) {

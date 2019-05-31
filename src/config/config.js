@@ -1,7 +1,7 @@
 export default {
-  proto: 'http',
-  host: 'localhost',
+  proto: "http",
+  host: "localhost",
   port: 3000,
-  dbName: 'neverForgetBeDB',
+  dbName: "neverForgetBeDB",
   dbUrl: `mongodb://localhost:27017/neverForgetBeDB`
 };

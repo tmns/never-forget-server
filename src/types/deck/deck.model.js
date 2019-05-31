@@ -12,7 +12,7 @@ const deckSchema = new mongoose.Schema(
     description: {
       type: String,
       trim: true,
-      maxlength: 40
+      maxlength: 100
     },
     createdBy: {
       type: mongoose.SchemaTypes.ObjectId,
